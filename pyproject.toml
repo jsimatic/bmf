@@ -25,8 +25,53 @@ markers = [
 [tool.rye]
 managed = true
 dev-dependencies = [
-    "pytest"
+    "pylint",
+    "pytest",
+    "ruff",
 ]
 
 [tool.hatch.metadata]
 allow-direct-references = true
+
+[tool.ruff]
+target-version = "py311"
+ignore-init-module-imports = true
+ 
+select = ["ALL"]
+namespace-packages = ["tests/"]
+ignore = [
+  # Do not require type annotation on idiomatic arguments/functions
+  "ANN002", # missing-type-args
+  "ANN003", # missing-type-kwargs
+  "ANN101", # missing-type-self
+  "ANN102", # missing-type-cls
+  "ANN204", # missing-return-type-special-method
+  # Do not require docstring for idiomatic functions
+  "D105", # magic-method
+  "D107", # public-init -> class docstring is usually sufficient
+  #
+  "ANN401", # any-type -> we may want to use that
+  # Choose between incompatible rules
+  "D203", # one-blank-line-before-class -> want no blank lines before class docstring
+  "D213", # multi-line-summary-second-line -> if we really need multi-line summary
+  # we might as well start it on the first line
+  # Better ignore rules that may generate false positives
+  "COM812", # trailing-comma-missing -> may flag argument list when function name + args
+  # dont fit on one line
+  "S311", # suspicious-non-cryptographic-random-usage -> we don't need crypto-level RNG.
+]
+ 
+# Same as tool.black
+line-length = 100
+ 
+[tool.ruff.flake8-annotations]
+# Suppress ANN* rules for any declaration that hasn't been typed at all.
+# This makes it easier to gradually add types to a codebase.
+ignore-fully-untyped = true
+# Suppress ANN200-level violations for functions that
+# contain no return statement or explicit return statement(s) all return None.
+suppress-none-returning = true
+ 
+[tool.ruff.flake8-unused-arguments]
+# Allow unused variadic arguments, like *args and **kwargs.
+ignore-variadic-names = true

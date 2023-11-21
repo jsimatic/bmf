@@ -1,8 +1,8 @@
+"""Benchmark BMF implementations."""
+
 import logging
 
-from . import model
-from . import baselines
-from . import timer
+from . import baselines, model, timer
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)

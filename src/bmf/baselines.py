@@ -5,8 +5,8 @@ Inspired from https://www.pymc.io/projects/examples/en/latest/case_studies/proba
 
 import re
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 
 from . import model
 
@@ -20,19 +20,24 @@ class Baseline:
     """Calculate baseline predictions."""
 
     def __init__(self, train_data: pd.DataFrame):
-        """Simple heuristic-based transductive learning to fill in missing
-        values in data matrix."""
-        raise NotImplementedError("baseline prediction not implemented for base class")
+        self._train(train_data)
 
-    def predict(self, user_id: int, movie_id: int) -> float:
-        raise NotImplementedError("baseline prediction not implemented for base class")
+    def _train(self, train_data: pd.DataFrame):  # noqa: ARG002 virtual method
+        """Train the predictor.
 
-    def rmse(self, test_data: pd.DataFrame):
+        To be implemented by concrete subclasses.
+        """
+        msg = "baseline prediction not implemented for base class"
+        raise NotImplementedError(msg)
+
+    def predict(self, user_id: int, movie_id: int) -> float:  # noqa: ARG002 virtual method
+        """Predict a rating given a single (user, movie) tuple."""
+        msg = "baseline prediction not implemented for base class"
+        raise NotImplementedError(msg)
+
+    def rmse(self, test_data: pd.DataFrame) -> float:
         """Calculate root mean squared error for predictions on test data."""
-        errs = [
-            self.predict(e.user_id, e.movie_id) - e.rating
-            for e in test_data.itertuples()
-        ]
+        errs = [self.predict(e.user_id, e.movie_id) - e.rating for e in test_data.itertuples()]
         return np.sqrt(np.mean(np.square(errs)))
 
     def __str__(self):
@@ -45,35 +50,41 @@ class Baseline:
 class UniformRandomBaseline(Baseline):
     """Fill missing values with uniform random values."""
 
-    def __init__(self, train_data: pd.DataFrame):
+    def _train(self, train_data: pd.DataFrame):
+        """Train the predictor by using the min and max of the input data."""
         self.rng = np.random.default_rng(12)
         self.rmin = train_data.rating.min()
         self.rmax = train_data.rating.max()
 
-    def predict(self, user_id: int, movie_id: int) -> float:
+    def predict(self, user_id: int, movie_id: int) -> float:  # noqa: ARG002 need to follow interface
+        """Predict a rating given a single (user, movie) tuple."""
         return self.rng.uniform(self.rmin, self.rmax)
 
 
 class GlobalMeanBaseline(Baseline):
     """Fill in missing values using the global mean."""
 
-    def __init__(self, train_data: pd.DataFrame):
+    def _train(self, train_data: pd.DataFrame):
+        """Train the predictor by using the global mean of the input data."""
         self.gmean = train_data.rating.mean()
 
-    def predict(self, user_id: int, movie_id: int) -> float:
+    def predict(self, user_id: int, movie_id: int) -> float:  # noqa: ARG002 need to follow interface
+        """Predict a rating given a single (user, movie) tuple."""
         return self.gmean
 
 
 class MeanOfMeansBaseline(Baseline):
     """Fill in missing values using mean of user/item/global means."""
 
-    def __init__(self, train_data: pd.DataFrame):
+    def _train(self, train_data: pd.DataFrame):
+        """Train the predictor by using the global, user, and movie mean of the input data."""
         dense = model.to_dense(train_data)
         self.global_means = dense.mean(axis=None)
         self.user_means = dense.mean(axis=1)
         self.movie_means = dense.mean(axis=0)
 
     def predict(self, user_id: int, movie_id: int) -> float:
+        """Predict a rating given a single (user, movie) tuple."""
         return np.nanmean(
             (
                 self.global_means,
