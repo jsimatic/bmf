@@ -24,7 +24,10 @@ class MLStats:
     users: int
     movies: int
     ratings: int
-    sparsity: float
+
+    @property
+    def sparsity(self) -> float:
+        return 1 - self.ratings / (self.users * self.movies)
 
     def __str__(self) -> str:
         return " - ".join(
@@ -39,11 +42,11 @@ class MLStats:
 
 def df_analyze(df: pd.DataFrame) -> MLStats:
     """Number of user, movies and sparsity"""
-    users = df.user_id.unique().shape[0]
-    movies = df.movie_id.unique().shape[0]
-    ratings = len(df)
-    sparsity = 1 - len(df) / (users * movies)
-    return MLStats(users, movies, ratings, sparsity)
+    return MLStats(
+        users=df.user_id.unique().shape[0],
+        movies=df.movie_id.unique().shape[0],
+        ratings=len(df),
+    )
 
 
 def to_dense(data: pd.DataFrame) -> pd.DataFrame:
